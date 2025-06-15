@@ -27,19 +27,23 @@ class OpenAIEmbeddingProvider:
         if self.tag_embeddings is not None:
             return
         self.tags_list = tags_list
-        resp = self.openai.Embedding.create(
+        # Use new OpenAI embeddings API: embeddings.create
+        resp = self.openai.embeddings.create(
             model=self.model,
             input=tags_list
         )
-        self.tag_embeddings = [d['embedding'] for d in resp['data']]
+        # resp.data is a list of objects with .embedding attribute
+        self.tag_embeddings = [d.embedding for d in resp.data]
 
     def classify(self, text, tags_list):
         self.load_tags(tags_list)
-        resp = self.openai.Embedding.create(
+        # Compute embedding for the note text
+        resp = self.openai.embeddings.create(
             model=self.model,
             input=text
         )
-        text_emb = resp['data'][0]['embedding']
+        # resp.data is a list of objects with .embedding attribute
+        text_emb = resp.data[0].embedding
         sims = []
         for tag, tag_emb in zip(self.tags_list, self.tag_embeddings):
             dot = sum(te * qe for te, qe in zip(text_emb, tag_emb))

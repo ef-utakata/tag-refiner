@@ -7,6 +7,10 @@ import os
 import sys
 import argparse
 import subprocess
+import yaml
+import numpy as np
+from sklearn.cluster import KMeans
+from embedding_classifier import OpenAIEmbeddingProvider, GeminiEmbeddingProvider, OllamaEmbeddingProvider
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -40,6 +44,27 @@ def parse_args():
         "--dry-run",
         action="store_true",
         help="Print generated taxonomy to stdout without writing file."
+    )
+    parser.add_argument(
+        "--use-embedding",
+        action="store_true",
+        help="Use embedding-based clustering to summarize note titles before taxonomy generation."
+    )
+    parser.add_argument(
+        "--embed-provider",
+        choices=["openai", "gemini", "ollama"],
+        default="openai",
+        help="Embedding provider for summarization (default: openai)."
+    )
+    parser.add_argument(
+        "--embed-model",
+        help="Embedding model identifier for summarization (overrides default)."
+    )
+    parser.add_argument(
+        "--clusters",
+        type=int,
+        default=10,
+        help="Number of clusters to form for title summarization (default: 10)."
     )
     return parser.parse_args()
 
@@ -83,6 +108,39 @@ def main():
     titles = collect_titles(args.input_dir)
     if not titles:
         sys.exit("No markdown files found in input directory.")
+    # Optionally summarize titles via embedding clustering
+    if args.use_embedding:
+        # Initialize embedding provider
+        if args.embed_provider == 'openai':
+            emb = OpenAIEmbeddingProvider(args.api_key or os.getenv('OPENAI_API_KEY'), args.embed_model)
+        elif args.embed_provider == 'gemini':
+            emb = GeminiEmbeddingProvider(args.api_key or os.getenv('GOOGLE_API_KEY'), args.embed_model)
+        else:
+            emb = OllamaEmbeddingProvider(args.embed_model)
+        # Embed titles
+        emb.load_tags(titles)
+        embs = np.array(emb.tag_embeddings)
+        # Cluster embeddings
+        n_clusters = min(args.clusters, len(titles))
+        try:
+            kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+            labels = kmeans.fit_predict(embs)
+        except Exception as e:
+            sys.exit(f"Error during clustering: {e}")
+        # Select representative title per cluster (closest to centroid)
+        rep_titles = []
+        for ci in range(n_clusters):
+            idxs = [i for i, lbl in enumerate(labels) if lbl == ci]
+            if not idxs:
+                continue
+            centroid = kmeans.cluster_centers_[ci]
+            # find index with minimal distance to centroid
+            dists = [np.linalg.norm(embs[i] - centroid) for i in idxs]
+            rep_idx = idxs[int(np.argmin(dists))]
+            rep_titles.append(titles[rep_idx])
+        print(f"Summarized {len(titles)} titles into {len(rep_titles)} representatives.")
+        titles = rep_titles
+    # Build prompts for taxonomy generation
     system_prompt, user_prompt = build_prompt(titles)
 
     taxonomy = None
