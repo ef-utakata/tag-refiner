@@ -1,0 +1,9 @@
+# Sample tag taxonomy - customize for your own vault
+sample_category:
+  - example_tag1
+  - example_tag2
+another_category:
+  - tagA
+  - tagB
+misc:
+  - uncategorized

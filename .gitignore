@@ -1,0 +1,37 @@
+# Ignore personal tags files
+tags_*.yml
+# Byte-compiled / optimized / DLL files
+__pycache__/ 
+*.py[cod] 
+
+# Virtual environments
+venv/ 
+.venv/ 
+env/ 
+ENV/ 
+
+# Local environment variable files
+.env 
+.env.*.local
+
+# macOS system files
+.DS_Store
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# pytest cache
+.pytest_cache/
+
+# Pip wheel metadata
+pip-wheel-metadata/
+
+# PyInstaller
+*.manifest
+*.spec
