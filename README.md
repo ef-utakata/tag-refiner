@@ -218,6 +218,19 @@ Install dependencies:
 ```
 pip install -r requirements.txt
 ```
+
+## Generate Index Note
+分類済みノートからObsidian Dataview対応のインデックスノートを生成します。
+```bash
+python generate_index.py \
+  --tags-file <taxonomy.yml> \
+  --input-dir <Clippings> \
+  [--output <Index.md>]
+```
+- `--tags-file`: 使用するタグ階層定義ファイル (デフォルト: tags.yml)
+- `--input-dir`: ノートディレクトリ (例: Clippings)
+- `--output`: 生成インデックスファイルパス (省略時: <input-dir>/Index.md)
+```
 Prepare or customize the tag taxonomy in `tags.yml` (default file provided next to the script).
 
 ## Usage
