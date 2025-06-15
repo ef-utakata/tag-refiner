@@ -1,5 +1,7 @@
 # Ignore local test scripts
 test/
+# Ignore generated report files
+report/
 # Ignore personal tags files
 tags_*.yml
 # Byte-compiled / optimized / DLL files
