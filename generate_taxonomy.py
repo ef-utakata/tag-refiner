@@ -108,20 +108,23 @@ def build_prompt(titles_list, depth):
     # Include max depth instruction in system prompt if provided
     system_prompt = (
         "You are an expert AI taxonomy designer. "
-        "Group the following note titles into a hierarchical tag taxonomy and output the full YAML mapping. "
-        "Respond only with the complete YAML mapping; do not truncate or include any explanations."
+        "Based on the list of note titles, generate a hierarchical tag taxonomy up to "
+        f"{depth} levels deep. "
+        "Respond only with the complete YAML mapping of categories and subcategories. "
+        "Do not include the original note titles in the output."
     )
     items = '\n'.join(f"- {t}" for t in titles_list)
     user_prompt = (
         f"""Here is a list of Obsidian note titles:
 {items}
 
-Please categorize them into parent/child tags, with a maximum depth of {depth} levels.
-Output only valid YAML mapping.
+Please extract semantic categories and subcategories up to {depth} levels. "
+        "Output only the taxonomy in YAML format, mapping each category to its list of subcategories. "
+        "Do not output or reference any note titles.
 Example:
 category:
-  - subtag1
-  - subtag2
+  - subcategory1
+  - subcategory2
 """
     )
     return system_prompt, user_prompt
