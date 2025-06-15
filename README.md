@@ -117,7 +117,7 @@ python tag_refiner.py \
 ```
 
 - `--provider`: 使用するプロバイダ (openai, gemini, ollama, embedding; デフォルト: openai)
-- `--model`: モデル識別子 (例: `gpt-4`, `chat-bison-001`, `llama2`)
+- `--model`: モデル識別子 (例: `gpt-4.1`, `gemini-2.5-flash-preview-05-20`, `llama4`)
 - `--api-key`: API キー (OpenAI/Gemini 用)
 - `--input-dir`: Markdown ノートのルートディレクトリ (必須)
 - `--tags-file`: タグ定義ファイルのパス (デフォルト: `tags.yml`)
@@ -125,11 +125,11 @@ python tag_refiner.py \
 - `--dry-run-limit`: dry-run モード時に処理するファイル数 (デフォルト: 10)
 
 ## Examples
-- OpenAI (gpt-4) で Dry-run（最初のデフォルト10件）:
-  ```bash
-  python tag_refiner.py \
-    --provider openai \
-    --model gpt-4 \
+ - OpenAI (gpt-4.1) で Dry-run（最初のデフォルト10件）:
+   ```bash
+   python tag_refiner.py \
+     --provider openai \
+     --model gpt-4.1 \
     --api-key $OPENAI_API_KEY \
     --input-dir Clippings \
     --dry-run
@@ -144,52 +144,52 @@ python tag_refiner.py \
     --dry-run \
     --dry-run-limit 5
   ```
-- Gemini (Google) で本番実行:
-  ```bash
-  python tag_refiner.py \
-    --provider gemini \
-    --model chat-bison-001 \
+ - Gemini (Google) で本番実行:
+   ```bash
+   python tag_refiner.py \
+     --provider gemini \
+     --model gemini-2.5-flash-preview-05-20 \
     --api-key $GOOGLE_API_KEY \
     --input-dir Clippings
   ```
- - Ollama (ローカルモデル llama2):
+ - Ollama (ローカルモデル llama4):
    ```bash
-   python tag_refiner.py --provider ollama --model llama2 --input-dir Clippings
+   python tag_refiner.py --provider ollama --model llama4 --input-dir Clippings
    ```
  - 埋め込み（OpenAI Embeddings）で分類（上位3タグ取得）:
    ```bash
    python tag_refiner.py \
      --provider embedding \
-     --model text-embedding-ada-002 \
+     --model text-embedding-3-small \
      --api-key $OPENAI_API_KEY \
      --input-dir Clippings
    ```
+ 
+## Report Generation
+LLMを使って最新のAIプラットフォーム比較レポートを自動生成するには、以下のコマンドを実行します:
+```bash
+python generate_report.py \
+  --provider <openai|gemini> \
+  --model <MODEL_NAME> \
+  --api-key <API_KEY> \
+  [--output report/report-merged.md]
+```
+デフォルトでは `report/report-merged.md` に保存されます。
 
 ## Tags Taxonomy
-デフォルトの `tags.yml`:
+サンプルの `tags.yml`:
 ```yaml
-research:
-  - papers
-  - bio_agri
-dev:
-  - agents
-  - tools
-  - tutorials
-news:
-  - announcements
-blog:
-  - tech
-life:
-  - recipes
-  - life-hacks
-  - products
-hobby:
-  - literature
-  - podcast
+# Sample tag taxonomy - customize for your vault
+sample_category:
+  - example_tag1
+  - example_tag2
+another_category:
+  - tagA
+  - tagB
 misc:
   - uncategorized
 ```  
-ファイルを編集してタグ階層を増減できます。
+上記を参考に `tags.yml` を編集してタグ階層を定義してください。
 
 ## Troubleshooting
 - 分類が意図しない場合は、`--dry-run` でノートの本文とタグ候補を確認し、`tags.yml` を調整してください。

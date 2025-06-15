@@ -47,7 +47,8 @@ class OpenAIProvider(BaseProvider):
         import openai
         openai.api_key = api_key
         self.openai = openai
-        self.model = model or "gpt-4"
+        # Use latest high-performance model by default
+        self.model = model or "gpt-4.1"
 
     def classify(self, text, tags_list):
         system_prompt = "You are a helpful assistant that classifies Obsidian notes into given tags."
@@ -82,7 +83,8 @@ class GeminiProvider(BaseProvider):
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         self.genai = genai
-        self.model = model or "chat-bison-001"
+        # Default to latest Gemini 2.5 Flash preview
+        self.model = model or "gemini-2.5-flash-preview-05-20"
 
     def classify(self, text, tags_list):
         system_prompt = "You are a helpful assistant that classifies Obsidian notes into given tags."
@@ -114,7 +116,8 @@ class GeminiProvider(BaseProvider):
 
 class OllamaProvider(BaseProvider):
     def __init__(self, model=None):
-        self.model = model or "llama2"
+        # Default to latest Llama 4 model
+        self.model = model or "llama4"
 
     def classify(self, text, tags_list):
         system_prompt = "You are a helpful assistant that classifies Obsidian notes into given tags."

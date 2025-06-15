@@ -17,7 +17,8 @@ class OpenAIEmbeddingProvider:
     def __init__(self, api_key, model=None, top_k=3):
         openai.api_key = api_key
         self.openai = openai
-        self.model = model or "text-embedding-ada-002"
+        # Default to next-gen small embedding model for cost efficiency
+        self.model = model or "text-embedding-3-small"
         self.top_k = top_k
         self.tags_list = None
         self.tag_embeddings = None
@@ -57,7 +58,8 @@ class GeminiEmbeddingProvider:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         self.genai = genai
-        self.model = model
+        # Default to experimental high-performance embedding
+        self.model = model or "gemini-embedding-exp-03-07"
         self.top_k = top_k
         self.tags_list = None
         self.tag_embeddings = None
@@ -89,7 +91,8 @@ class OllamaEmbeddingProvider:
     Expects the model to output JSON-formatted embeddings for input content.
     """
     def __init__(self, model=None, top_k=3):
-        self.model = model
+        # Default to high-performance local embedding model
+        self.model = model or "mxbai-embed-large"
         self.top_k = top_k
         self.tags_list = None
         self.tag_embeddings = None
