@@ -44,21 +44,24 @@ def load_tags_file(path):
     """
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
-    if isinstance(data, dict):
-        if 'tags' in data and isinstance(data['tags'], list):
-            return data['tags']
-        tags = []
-        for parent, children in data.items():
-            if isinstance(children, list):
-                for child in children:
-                    tags.append(f"{parent}/{child}")
-            else:
-                tags.append(str(parent))
-        return tags
-    elif isinstance(data, list):
-        return data
-    else:
+    # Recursively flatten nested dict/list into hierarchical tags
+    def recurse(node, prefix=""):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                new_prefix = f"{prefix}/{key}" if prefix else str(key)
+                yield from recurse(value, new_prefix)
+        elif isinstance(node, list):
+            for item in node:
+                yield from recurse(item, prefix)
+        elif isinstance(node, str):
+            tag = f"{prefix}/{node}" if prefix else node
+            yield tag
+        else:
+            return
+    tags = list(recurse(data))
+    if not tags:
         raise ValueError(f"Invalid tags file format: {path}")
+    return tags
 
 class BaseProvider:
     def classify(self, text, tags_list):
