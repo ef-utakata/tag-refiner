@@ -105,27 +105,17 @@ def collect_titles(input_dir):
 
 def build_prompt(titles_list, depth):
     """Build system and user prompts for taxonomy generation with max depth."""
-    # Include max depth instruction in system prompt if provided
+    # Japanese prompt: generate taxonomy in Japanese without titles
     system_prompt = (
-        "You are an expert AI taxonomy designer. "
-        "Based on the list of note titles, generate a hierarchical tag taxonomy up to "
-        f"{depth} levels deep. "
-        "Respond only with the complete YAML mapping of categories and subcategories. "
-        "Do not include the original note titles in the output."
+        f"あなたは優れたAIタクソノミー設計者です。以下のObsidianノートタイトル一覧をもとに、"
+        f"最大{depth}階層のカテゴリ/サブカテゴリを日本語で生成し、YAML形式で出力してください。"
+        "不要な説明やタイトルは含めず、YAMLマッピングのみを返してください。"
     )
     items = '\n'.join(f"- {t}" for t in titles_list)
     user_prompt = (
-        f"""Here is a list of Obsidian note titles:
-{items}
-
-Please extract semantic categories and subcategories up to {depth} levels. "
-        "Output only the taxonomy in YAML format, mapping each category to its list of subcategories. "
-        "Do not output or reference any note titles.
-Example:
-category:
-  - subcategory1
-  - subcategory2
-"""
+        f"ノートタイトル一覧:\n{items}\n\n"
+        "上記のタイトルをもとに、日本語のカテゴリ/サブカテゴリ階層を生成してください。"
+        "出力はYAMLマッピングのみで、カテゴリごとにサブカテゴリのリストを示してください。"
     )
     return system_prompt, user_prompt
 

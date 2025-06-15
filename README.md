@@ -192,7 +192,7 @@ misc:
 
 ## Generate Taxonomy
 
-Obsidian ノート一覧から YAML タグ階層を自動生成するスクリプトです。
+Obsidian ノート一覧から日本語のタグ階層を自動生成するスクリプトです。
 生成結果はカテゴリ／サブカテゴリの階層マッピングのみを含み、元のノートタイトルは出力されません。
 ```bash
 python generate_taxonomy.py \
