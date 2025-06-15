@@ -190,6 +190,27 @@ misc:
 - バグ報告・機能追加は Pull Request または Issue を立ててください。
 - タグ階層の変更は `tags.yml` に直接反映できます。
 
+## Generate Taxonomy
+
+Obsidian ノート一覧から YAML タグ階層を自動生成するスクリプトです。
+```bash
+python generate_taxonomy.py \
+  --provider <openai|gemini|ollama> \
+  --model <MODEL_NAME> \
+  --api-key <API_KEY> \
+  --input-dir <NOTES_DIR> \
+  [--depth <N>] \        # タクソノミー階層の最大深度 (デフォルト:3)
+  [--use-embedding] \    # 埋め込み＋クラスタリングでタイトルを要約
+  [--embed-provider <openai|gemini|ollama>] \
+  [--embed-model <EMBED_MODEL>] \
+  [--clusters <N>] \     # クラスタ数 (デフォルト:10)
+  [--output tags.yml] \ # 保存先 (デフォルト: tags.yml)
+  [--dry-run]            # 標準出力のみ (ファイル未書き込み)
+```
+* `--depth`: タクソノミー階層の最大深度を指定
+* `--use-embedding`: タイトルを埋め込みベースでクラスター化して要約後に分類
+* `--clusters`: 要約時のクラスタ数を指定
+
 ## Setup
 Install dependencies:
 ```
