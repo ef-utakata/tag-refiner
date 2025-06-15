@@ -41,7 +41,8 @@ def render_taxonomy(node, prefix='', level=2, input_folder=None):
         folder = input_folder or ''
         lines.append('```dataview')
         # List Title, author, created, description, source from frontmatter
-        lines.append('table file.link as Title, author as Author, created as Created, description as Description, source as Source')
+        # Show frontmatter fields; Dataview always displays file name by default
+        lines.append('table author as Author, created as Created, description as Description, source as Source')
         if folder:
             lines.append(f'from "{folder}"')
         lines.append(f'where contains(tags, "{tag_path}")')
@@ -56,7 +57,7 @@ def render_taxonomy(node, prefix='', level=2, input_folder=None):
                 lines.append(f"{'#' * (level+1)} {sub}")
                 leaf = f"{tag_path}/{sub}"
                 lines.append('```dataview')
-                lines.append('table file.link as Title, author as Author, created as Created, description as Description, source as Source')
+                lines.append('table author as Author, created as Created, description as Description, source as Source')
                 if folder:
                     lines.append(f'from "{folder}"')
                 lines.append(f'where contains(tags, "{leaf}")')
