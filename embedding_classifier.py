@@ -37,13 +37,21 @@ class OpenAIEmbeddingProvider:
 
     def classify(self, text, tags_list):
         self.load_tags(tags_list)
-        # Compute embedding for the note text
-        resp = self.openai.embeddings.create(
-            model=self.model,
-            input=text
-        )
-        # resp.data is a list of objects with .embedding attribute
-        text_emb = resp.data[0].embedding
+        # Compute embedding for the note text, chunk if too long
+        def get_emb(chunk_text):
+            resp = self.openai.embeddings.create(model=self.model, input=chunk_text)
+            return resp.data[0].embedding
+        # Approximate char limit to avoid token overflow (<~8192 tokens)
+        # Reduce to 8000 chars to account for Japanese characters (~1 char per token)
+        MAX_CHARS = 8000
+        if len(text) > MAX_CHARS:
+            chunks = [text[i:i+MAX_CHARS] for i in range(0, len(text), MAX_CHARS)]
+            embs = [get_emb(chunk) for chunk in chunks]
+            # average embeddings across chunks
+            dim = len(embs[0])
+            text_emb = [sum(e[i] for e in embs) / len(embs) for i in range(dim)]
+        else:
+            text_emb = get_emb(text)
         sims = []
         for tag, tag_emb in zip(self.tags_list, self.tag_embeddings):
             dot = sum(te * qe for te, qe in zip(text_emb, tag_emb))
