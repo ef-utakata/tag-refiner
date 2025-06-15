@@ -166,7 +166,8 @@ def main():
         if not openai.api_key:
             sys.exit('Error: OPENAI_API_KEY is not set.')
         model = args.model or 'gpt-4.1'
-        resp = openai.ChatCompletion.create(
+        # Use new OpenAI chat completion API
+        resp = openai.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
