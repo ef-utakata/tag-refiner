@@ -117,7 +117,7 @@ python tag_refiner.py \
 ```
 
 - `--provider`: 使用するプロバイダ (openai, gemini, ollama, embedding; デフォルト: openai)
-- `--model`: モデル識別子 (例: `gpt-4.1`, `gemini-2.5-flash-preview-05-20`, `llama4`)
+- `--model`: モデル識別子 (例: `o4-mini`, `gemini-2.5-flash-preview-05-20`, `llama4`)
 - `--api-key`: API キー (OpenAI/Gemini 用)
 - `--input-dir`: Markdown ノートのルートディレクトリ (必須)
 - `--tags-file`: タグ定義ファイルのパス (デフォルト: `tags.yml`)
@@ -125,11 +125,11 @@ python tag_refiner.py \
 - `--dry-run-limit`: dry-run モード時に処理するファイル数 (デフォルト: 10)
 
 ## Examples
- - OpenAI (gpt-4.1) で Dry-run（最初のデフォルト10件）:
+ - OpenAI (o4-mini) で Dry-run（デフォルトモデル:o4-mini, 最初の10件）:
    ```bash
    python tag_refiner.py \
      --provider openai \
-     --model gpt-4.1 \
+     --model o4-mini \
     --api-key $OPENAI_API_KEY \
     --input-dir Clippings \
     --dry-run
@@ -259,7 +259,7 @@ python tag_refiner.py --provider openai --model gpt-4 --api-key $OPENAI_API_KEY 
 # Gemini (Google) with chat-bison-001, using default tags.yml
 python tag_refiner.py \
     --provider gemini \
-    --model chat-bison-001 \
+    --model gemini-2.5-flash-preview-05-20 \
     --api-key $GOOGLE_API_KEY \
     --input-dir PATH_TO_CLIPPINGS
     
@@ -272,7 +272,7 @@ python tag_refiner.py \
     --tags-file /path/to/custom_tags.yml
 
  # Ollama local LLM (e.g., llama2)
- python tag_refiner.py --provider ollama --model llama2 --input-dir PATH_TO_CLIPPINGS
+python tag_refiner.py --provider ollama --model llama4 --input-dir PATH_TO_CLIPPINGS
  # Embedding (OpenAI Embeddings)
  python tag_refiner.py --provider embedding \
    --model text-embedding-ada-002 \
