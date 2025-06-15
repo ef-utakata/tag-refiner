@@ -204,7 +204,7 @@ python generate_taxonomy.py \
   [--embed-provider <openai|gemini|ollama>] \
   [--embed-model <EMBED_MODEL>] \
   [--clusters <N>] \     # クラスタ数 (デフォルト:10)
-  [--output tags.yml] \ # 保存先 (デフォルト: tags.yml)
+  [--output <file>] \ # 保存先 (デフォルト: tags_YYMMDD.yml)
   [--dry-run]            # 標準出力のみ (ファイル未書き込み)
 ```
 * `--depth`: タクソノミー階層の最大深度を指定

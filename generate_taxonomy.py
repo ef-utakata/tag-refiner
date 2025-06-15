@@ -5,6 +5,7 @@ Supports OpenAI, Google Gemini, and Ollama LLM providers via completion.
 """
 import os
 import sys
+from datetime import date
 import argparse
 import subprocess
 import yaml
@@ -37,13 +38,19 @@ def parse_args():
     )
     parser.add_argument(
         "--output",
-        default="tags.yml",
         help="Output file path for generated taxonomy YAML."
+        " If unspecified, defaults to tags_YYMMDD.yml."
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Print generated taxonomy to stdout without writing file."
+    )
+    parser.add_argument(
+        "--depth",
+        type=int,
+        default=3,
+        help="Maximum depth of taxonomy hierarchy (default: 3)."
     )
     parser.add_argument(
         "--use-embedding",
@@ -87,18 +94,21 @@ def collect_titles(input_dir):
                 titles.append(title)
     return titles
 
-def build_prompt(titles_list):
-    """Build system and user prompts for taxonomy generation."""
+def build_prompt(titles_list, depth):
+    """Build system and user prompts for taxonomy generation with max depth."""
+    # Include max depth instruction in system prompt if provided
     system_prompt = (
         "You are an expert AI taxonomy designer. "
-        "Group the following note titles into a hierarchical tag taxonomy and output it as YAML."
+        "Group the following note titles into a hierarchical tag taxonomy "
+        "and output it as YAML."
     )
     items = '\n'.join(f"- {t}" for t in titles_list)
     user_prompt = (
         f"""Here is a list of Obsidian note titles:
 {items}
 
-Please categorize them into parent/child tags. Output only valid YAML mapping. Example:
+Please categorize them into parent/child tags, with a maximum depth of {depth} levels. "
+"Output only valid YAML mapping. Example:
 category:
   - subtag1
   - subtag2
@@ -144,7 +154,7 @@ def main():
         print(f"Summarized {len(titles)} titles into {len(rep_titles)} representatives.")
         titles = rep_titles
     # Build prompts for taxonomy generation
-    system_prompt, user_prompt = build_prompt(titles)
+    system_prompt, user_prompt = build_prompt(titles, args.depth)
 
     taxonomy = None
     if args.provider == 'openai':
@@ -202,9 +212,15 @@ def main():
     if args.dry_run:
         print(taxonomy)
     else:
-        with open(args.output, 'w', encoding='utf-8') as f:
+        # Determine output path with timestamp if not specified
+        output_path = args.output
+        if not output_path:
+            today = date.today().strftime("%y%m%d")
+            output_path = f"tags_{today}.yml"
+        # Write taxonomy to file
+        with open(output_path, 'w', encoding='utf-8') as f:
             f.write(taxonomy)
-        print(f"Generated taxonomy saved to {args.output}")
+        print(f"Generated taxonomy saved to {output_path}")
 
 if __name__ == '__main__':
     main()
