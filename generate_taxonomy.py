@@ -85,12 +85,21 @@ def collect_titles(input_dir):
                 continue
             if fn.lower().endswith('.md'):
                 path = os.path.join(root, fn)
+                # Extract first meaningful line (skip YAML frontmatter '---')
+                title = ''
                 try:
                     with open(path, 'r', encoding='utf-8') as f:
-                        first = f.readline().strip()
+                        for line in f:
+                            text = line.strip()
+                            if not text or text.startswith('---'):
+                                continue
+                            title = text.lstrip('# ').strip()
+                            break
                 except Exception:
-                    first = ''
-                title = first.lstrip('# ').strip() or os.path.splitext(fn)[0]
+                    title = ''
+                # Fallback to filename without extension
+                if not title:
+                    title = os.path.splitext(fn)[0]
                 titles.append(title)
     return titles
 
@@ -99,16 +108,17 @@ def build_prompt(titles_list, depth):
     # Include max depth instruction in system prompt if provided
     system_prompt = (
         "You are an expert AI taxonomy designer. "
-        "Group the following note titles into a hierarchical tag taxonomy "
-        "and output it as YAML."
+        "Group the following note titles into a hierarchical tag taxonomy and output the full YAML mapping. "
+        "Respond only with the complete YAML mapping; do not truncate or include any explanations."
     )
     items = '\n'.join(f"- {t}" for t in titles_list)
     user_prompt = (
         f"""Here is a list of Obsidian note titles:
 {items}
 
-Please categorize them into parent/child tags, with a maximum depth of {depth} levels. "
-"Output only valid YAML mapping. Example:
+Please categorize them into parent/child tags, with a maximum depth of {depth} levels.
+Output only valid YAML mapping.
+Example:
 category:
   - subtag1
   - subtag2
@@ -173,7 +183,8 @@ def main():
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0
+            temperature=0,
+            max_tokens=2048
         )
         taxonomy = resp.choices[0].message.content
     elif args.provider == 'gemini':
@@ -192,7 +203,8 @@ def main():
                 {"author": "system", "content": system_prompt},
                 {"author": "user", "content": user_prompt}
             ],
-            temperature=0
+            temperature=0,
+            max_output_tokens=2048
         )
         taxonomy = resp.choices[0].message.content
     else:
