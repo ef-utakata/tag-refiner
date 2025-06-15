@@ -73,6 +73,9 @@ def collect_titles(input_dir):
     titles = []
     for root, _, files in os.walk(input_dir):
         for fn in files:
+            # Skip hidden files and dotfiles
+            if fn.startswith('.'):
+                continue
             if fn.lower().endswith('.md'):
                 path = os.path.join(root, fn)
                 try:

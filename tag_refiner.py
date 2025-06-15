@@ -295,6 +295,9 @@ def main():
     markdown_files = []
     for root, _, files in os.walk(args.input_dir):
         for fn in files:
+            # Skip hidden files (e.g., .DS_Store) and dotfiles
+            if fn.startswith('.'):
+                continue
             if fn.lower().endswith('.md'):
                 full = os.path.join(root, fn)
                 rel = os.path.relpath(full, args.input_dir)
