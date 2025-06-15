@@ -165,16 +165,6 @@ python tag_refiner.py \
      --input-dir Clippings
    ```
  
-## Report Generation
-LLMを使って最新のAIプラットフォーム比較レポートを自動生成するには、以下のコマンドを実行します:
-```bash
-python generate_report.py \
-  --provider <openai|gemini> \
-  --model <MODEL_NAME> \
-  --api-key <API_KEY> \
-  [--output report/report-merged.md]
-```
-デフォルトでは `report/report-merged.md` に保存されます。
 
 ## Tags Taxonomy
 サンプルの `tags.yml`:
