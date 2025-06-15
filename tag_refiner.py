@@ -11,6 +11,28 @@ import subprocess
 import yaml
 from embedding_classifier import OpenAIEmbeddingProvider, GeminiEmbeddingProvider, OllamaEmbeddingProvider
 
+def build_classification_prompts(text, tags_list):
+    """
+    Build system and user prompts for Obsidian note classification.
+    Returns (system_prompt, user_prompt) for LLM calls.
+    """
+    system_prompt = (
+        "You are a helpful assistant that classifies Obsidian notes into the given tags. "
+        "Only output a JSON array of valid tags."
+    )
+    tag_lines = '\n'.join(f"- {t}" for t in tags_list)
+    user_prompt = (
+        f"""以下は Obsidian ノートの本文です。
+タグ一覧:
+{tag_lines}
+
+出力は JSON 配列のみで、例: [\"dev/agents\",\"dev/tools\"]。
+ノート本文:
+{text}
+"""
+    )
+    return system_prompt, user_prompt
+
 def load_tags_file(path):
     """
     Load tag taxonomy from a YAML file.
@@ -51,17 +73,7 @@ class OpenAIProvider(BaseProvider):
         self.model = model or "gpt-4.1"
 
     def classify(self, text, tags_list):
-        system_prompt = "You are a helpful assistant that classifies Obsidian notes into given tags."
-        user_prompt = (
-            f"""以下は Obsidian ノートの本文です。以下のタグ一覧のいずれかに分類してください。
-タグ一覧:
-{chr(10).join(f"- {t}" for t in tags_list)}
-
-出力は JSON 配列のみで、例: ["dev/agents","dev/tools"].
-ノート本文:
-{text}
-"""
-        )
+        system_prompt, user_prompt = build_classification_prompts(text, tags_list)
         resp = self.openai.ChatCompletion.create(
             model=self.model,
             messages=[
@@ -87,17 +99,7 @@ class GeminiProvider(BaseProvider):
         self.model = model or "gemini-2.5-flash-preview-05-20"
 
     def classify(self, text, tags_list):
-        system_prompt = "You are a helpful assistant that classifies Obsidian notes into given tags."
-        user_prompt = (
-            f"""以下は Obsidian ノートの本文です。以下のタグ一覧のいずれかに分類してください。
-タグ一覧:
-{chr(10).join(f"- {t}" for t in tags_list)}
-
-出力は JSON 配列のみで、例: ["dev/agents","dev/tools"].
-ノート本文:
-{text}
-"""
-        )
+        system_prompt, user_prompt = build_classification_prompts(text, tags_list)
         response = self.genai.chat.completions.create(
             model=self.model,
             messages=[
@@ -120,17 +122,7 @@ class OllamaProvider(BaseProvider):
         self.model = model or "llama4"
 
     def classify(self, text, tags_list):
-        system_prompt = "You are a helpful assistant that classifies Obsidian notes into given tags."
-        user_prompt = (
-            f"""以下は Obsidian ノートの本文です。以下のタグ一覧のいずれかに分類してください。
-タグ一覧:
-{chr(10).join(f"- {t}" for t in tags_list)}
-
-出力は JSON 配列のみで、例: ["dev/agents","dev/tools"].
-ノート本文:
-{text}
-"""
-        )
+        system_prompt, user_prompt = build_classification_prompts(text, tags_list)
         prompt = system_prompt + "\n" + user_prompt
         try:
             result = subprocess.run(
@@ -233,6 +225,8 @@ def process_file(path, provider, tags_list, dry_run=False):
         if not dry_run:
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(new_text)
+        return True
+    return False
 
 def main():
     args = parse_args()
@@ -277,19 +271,39 @@ def main():
     except Exception as e:
         print(f"Error loading tags file {tags_file}: {e}", file=sys.stderr)
         sys.exit(1)
-    # Collect all markdown files
+    # Prepare processed-files manifest (skip already processed)
+    manifest_path = os.path.join(args.input_dir, '.tag_refiner_processed')
+    processed_set = set()
+    if not args.dry_run and os.path.exists(manifest_path):
+        with open(manifest_path, 'r', encoding='utf-8') as mf:
+            processed_set = set(line.strip() for line in mf if line.strip())
+    # Collect markdown files, skipping processed ones
     markdown_files = []
     for root, _, files in os.walk(args.input_dir):
         for fn in files:
             if fn.lower().endswith('.md'):
-                markdown_files.append(os.path.join(root, fn))
+                full = os.path.join(root, fn)
+                rel = os.path.relpath(full, args.input_dir)
+                if not args.dry_run and rel in processed_set:
+                    continue
+                markdown_files.append(full)
     # If dry-run, limit to first N files
     if args.dry_run:
         count = args.dry_run_limit
         markdown_files = markdown_files[:count]
     # Process selected markdown files
+    updated_rel_paths = []
     for path in markdown_files:
-        process_file(path, provider, tags_list, dry_run=args.dry_run)
+        updated = process_file(path, provider, tags_list, dry_run=args.dry_run)
+        if updated and not args.dry_run:
+            rel = os.path.relpath(path, args.input_dir)
+            updated_rel_paths.append(rel)
+    # Update manifest with newly processed files
+    if not args.dry_run and updated_rel_paths:
+        new_set = processed_set.union(updated_rel_paths)
+        with open(manifest_path, 'w', encoding='utf-8') as mf:
+            for rel in sorted(new_set):
+                mf.write(rel + '\n')
 
 if __name__ == '__main__':
     main()
