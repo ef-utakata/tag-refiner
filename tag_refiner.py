@@ -266,6 +266,17 @@ def main():
         provider = OllamaProvider(args.model)
     # Load tag taxonomy from YAML
     tags_file = args.tags_file or os.path.join(os.path.dirname(__file__), 'tags.yml')
+    # Print configuration details
+    print("=== Tag Refiner Configuration ===")
+    print(f"Provider: {args.provider}")
+    if args.provider == 'embedding':
+        print(f"Embedding provider: {args.embed_provider}")
+        print(f"Embedding model: {provider.model}")
+    else:
+        print(f"Completion model: {provider.model}")
+    print(f"Tags file: {tags_file}")
+    print(f"Input directory: {args.input_dir}")
+    print(f"Dry-run: {args.dry_run}, Dry-run limit: {args.dry_run_limit}")
     try:
         tags_list = load_tags_file(tags_file)
     except Exception as e:
