@@ -72,19 +72,23 @@ class OpenAIProvider(BaseProvider):
         import openai
         openai.api_key = api_key
         self.openai = openai
-        # Use latest high-performance model by default
-        self.model = model or "gpt-4.1"
+        # Use o4-mini as default model for cost-effective tagging
+        self.model = model or "o4-mini"
 
     def classify(self, text, tags_list):
         system_prompt, user_prompt = build_classification_prompts(text, tags_list)
-        resp = self.openai.ChatCompletion.create(
-            model=self.model,
-            messages=[
+        # Use new OpenAI chat completion API
+        params = {
+            "model": self.model,
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
-            ],
-            temperature=0
-        )
+            ]
+        }
+        if self.model != 'o4-mini':
+            params["temperature"] = 0
+
+        resp = self.openai.chat.completions.create(**params)
         content = resp.choices[0].message.content.strip()
         try:
             tags = json.loads(content)
@@ -206,11 +210,7 @@ def process_file(path, provider, tags_list, dry_run=False):
     else:
         fm_text = ''
         body = text
-    # classify based on body
-    content_for_classify = body.strip()
-    tags = provider.classify(content_for_classify, tags_list)
-    if not tags:
-        tags = ['misc/uncategorized']
+    
     # parse existing frontmatter
     if fm_text:
         try:
@@ -220,7 +220,22 @@ def process_file(path, provider, tags_list, dry_run=False):
             fm_dict = {}
     else:
         fm_dict = {}
+    
+    # check if tag revision checkbox exists - if so, skip tagging
+    if 'tag_revision_needed' in fm_dict:
+        print(f"Skipping {path}: tag revision checkbox found")
+        return False
+    
+    # classify based on body
+    content_for_classify = body.strip()
+    tags = provider.classify(content_for_classify, tags_list)
+    if not tags:
+        tags = ['misc/uncategorized']
+    
+    # add tag revision checkbox to frontmatter
     fm_dict['tags'] = tags
+    fm_dict['tag_revision_needed'] = False
+    
     new_fm = yaml.safe_dump(fm_dict, allow_unicode=True, sort_keys=False).strip()
     new_text = f"---\n{new_fm}\n---\n{body.lstrip()}"
     if text != new_text:
@@ -285,13 +300,7 @@ def main():
     except Exception as e:
         print(f"Error loading tags file {tags_file}: {e}", file=sys.stderr)
         sys.exit(1)
-    # Prepare processed-files manifest (skip already processed)
-    manifest_path = os.path.join(args.input_dir, '.tag_refiner_processed')
-    processed_set = set()
-    if not args.dry_run and os.path.exists(manifest_path):
-        with open(manifest_path, 'r', encoding='utf-8') as mf:
-            processed_set = set(line.strip() for line in mf if line.strip())
-    # Collect markdown files, skipping processed ones
+    # Collect markdown files
     markdown_files = []
     for root, _, files in os.walk(args.input_dir):
         for fn in files:
@@ -300,27 +309,14 @@ def main():
                 continue
             if fn.lower().endswith('.md'):
                 full = os.path.join(root, fn)
-                rel = os.path.relpath(full, args.input_dir)
-                if not args.dry_run and rel in processed_set:
-                    continue
                 markdown_files.append(full)
     # If dry-run, limit to first N files
     if args.dry_run:
         count = args.dry_run_limit
         markdown_files = markdown_files[:count]
     # Process selected markdown files
-    updated_rel_paths = []
     for path in markdown_files:
-        updated = process_file(path, provider, tags_list, dry_run=args.dry_run)
-        if updated and not args.dry_run:
-            rel = os.path.relpath(path, args.input_dir)
-            updated_rel_paths.append(rel)
-    # Update manifest with newly processed files
-    if not args.dry_run and updated_rel_paths:
-        new_set = processed_set.union(updated_rel_paths)
-        with open(manifest_path, 'w', encoding='utf-8') as mf:
-            for rel in sorted(new_set):
-                mf.write(rel + '\n')
+        process_file(path, provider, tags_list, dry_run=args.dry_run)
 
 if __name__ == '__main__':
     main()
