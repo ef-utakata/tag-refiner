@@ -303,6 +303,9 @@ def main():
     # Collect markdown files
     markdown_files = []
     for root, _, files in os.walk(args.input_dir):
+        # Skip 00_index directory
+        if '00_index' in root:
+            continue
         for fn in files:
             # Skip hidden files (e.g., .DS_Store) and dotfiles
             if fn.startswith('.'):

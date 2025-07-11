@@ -17,9 +17,13 @@ venv/
 env/ 
 ENV/ 
 
-# Local environment variable files
+# Local environment variable files - APIキー等機密情報を含む
 .env 
 .env.*.local
+
+# Processing log files - 実行ログファイル
+*.log
+tag_processing_*.log
 
 # macOS system files
 .DS_Store

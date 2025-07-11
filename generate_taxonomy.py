@@ -168,7 +168,8 @@ def main():
         openai.api_key = args.api_key or os.getenv('OPENAI_API_KEY')
         if not openai.api_key:
             sys.exit('Error: OPENAI_API_KEY is not set.')
-        model = args.model or 'gpt-4.1'
+        # Default to cost-effective o4-mini model
+        model = args.model or 'o4-mini'
         # Use new OpenAI chat completion API
         resp = openai.chat.completions.create(
             model=model,

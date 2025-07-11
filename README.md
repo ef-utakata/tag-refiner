@@ -1,287 +1,185 @@
-## 埋め込みプロバイダとモデルの指定
+# Obsidian Tag Refiner
 
-`--provider embedding` を使用する際は、以下のフラグで埋め込みサービスとモデルを指定できます:
+Obsidian の Clippings/ フォルダ内 Markdown ノートを、LLM（OpenAI, Gemini, Ollama）を使って自動分類し、YAML Frontmatter に `tags` プロパティを付与するスクリプトです。
 
-- `--embed-provider <openai|gemini|ollama>`: 埋め込みプロバイダを指定します (デフォルト: openai)
-- `--embed-model <EMBED_MODEL>`: 埋め込みモデル識別子を指定します (例: text-embedding-ada-002, models/embedding-gecko-001)
+## 主な機能
+
+- **自動タグ分類**: ノート内容をLLMで解析し、事前定義されたタグ階層に自動分類
+- **チェックボックス機能**: `tag_revision_needed` プロパティでタグ修正が必要なファイルをマーク
+- **複数プロバイダー対応**: OpenAI、Gemini、Ollama、埋め込みベース分類をサポート
+- **Obsidian起動時実行**: Shell Commands pluginで自動実行可能
+- **バックグラウンド実行**: 大量ファイルの処理でもタイムアウトしない
+- **00_indexディレクトリ除外**: インデックスファイルはタグ付与対象外
+
+## セットアップ
+
+詳細な設定手順は [SETUP.md](SETUP.md) を参照してください。
+
+### 簡単セットアップ
+
+1. APIキーの設定:
+   ```bash
+   cp .env.example .env
+   # .envファイルを編集してAPIキーを設定
+   ```
+
+2. Obsidian Shell Commands plugin設定:
+   - `tag_refiner_startup.bat` を起動時実行に設定
+
+## 使用方法
+
+### 基本コマンド
+```bash
+python tag_refiner.py \
+  --provider <openai|gemini|ollama|embedding> \
+  --model <MODEL_NAME> \
+  --input-dir <NOTES_DIR> \
+  [--dry-run]
+```
+
+### 主なオプション
+- `--provider`: 使用するプロバイダ (openai, gemini, ollama, embedding)
+- `--model`: モデル識別子 (o4-mini, gemini-2.5-flash-preview-05-20, llama4)
+- `--input-dir`: Markdownノートのディレクトリ
+- `--dry-run`: 実際の更新をせずに処理内容を確認
+
+## 利用可能なプロバイダー
+
+### OpenAI（推奨）
+- **o4-mini**: 最新で最もコスト効率が良い
+- **gpt-4o**: 高精度だが高コスト
+- **text-embedding-3-small**: 埋め込みベース分類用
+
+### Google Gemini
+- **gemini-2.5-flash-preview-05-20**: 最新の高速モデル
+- **gemini-1.5-pro**: 高精度モデル
+
+### Ollama（ローカル実行）
+- **llama4**: 最新のLlamaモデル
+- **mxbai-embed-large**: 埋め込みベース分類用
+
+## 埋め込みベース分類
+
+`--provider embedding` を使用する際のオプション:
+
+- `--embed-provider <openai|gemini|ollama>`: 埋め込みプロバイダを指定
+- `--embed-model <MODEL>`: 埋め込みモデル識別子を指定
 
 ### 例
 
-- OpenAI 埋め込みで分類:
-  ```bash
-  python tag_refiner.py \
-    --provider embedding \
-    --embed-provider openai \
-    --embed-model text-embedding-ada-002 \
-    --api-key $OPENAI_API_KEY \
-    --input-dir PATH_TO_CLIPPINGS
-  ```
-
-- Gemini 埋め込みで分類:
-  ```bash
-  python tag_refiner.py \
-    --provider embedding \
-    --embed-provider gemini \
-    --embed-model models/embedding-gecko-001 \
-    --api-key $GOOGLE_API_KEY \
-    --input-dir PATH_TO_CLIPPINGS
-  ```
-
-- Ollama 埋め込みで分類:
-  ```bash
-  python tag_refiner.py \
-    --provider embedding \
-    --embed-provider ollama \
-    --embed-model my-embed-model \
-    --input-dir PATH_TO_CLIPPINGS
-  ```
-# Obsidian Tag Refiner
-
-Obsidian の Clippings/ フォルダ内 Markdown ノートを、LLM（OpenAI, Gemini, Ollama）のいずれかを使って自動分類し、YAML Frontmatter に `tags` プロパティを付与するスクリプトです。
-
-## Table of Contents
-1. [Features](#features)
-2. [Prerequisites](#prerequisites)
-3. [Installation](#installation)
-4. [Configuration](#configuration)
-5. [Usage](#usage)
-6. [Examples](#examples)
-7. [Tags Taxonomy](#tags-taxonomy)
-8. [Troubleshooting](#troubleshooting)
-9. [Contributing](#contributing)
-
-## Features
-- Clippings/ 以下のすべての `.md` ファイルを再帰的に走査
-- 記事内容を LLM で解析し、事前定義された階層タグに分類
-- YAML Frontmatter を自動更新して `tags` プロパティを付与
-- OpenAI, Google Gemini, Ollama の切り替え対応
-- Dry-run モードで実際の書き換えを確認可能
-
-## Prerequisites
-- Python 3.8 以上
-- pip
-- (推奨) virtualenv
-- LLM プロバイダ用の API キーまたはローカルモデル
-  - OpenAI: `OPENAI_API_KEY`
-  - Gemini: `GOOGLE_API_KEY`
-  - Ollama: `ollama` CLI とローカルにダウンロード済みモデル
-
-## Installation
-1. リポジトリまたはスクリプト配布フォルダをクローン/コピー
-2. スクリプトディレクトリに移動:
-   ```bash
-   cd private_works/scripts/codex/tag_refiner
-   ```
-3. (任意) virtualenv の作成・有効化:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-4. 依存パッケージをインストール:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Configuration
-### タグ定義 (tags.yml)
-`tags.yml` にタグ階層を YAML 形式で定義します。例:
-```yaml
-research:
-  - papers
-  - bio_agri
-dev:
-  - agents
-  - tools
-  - tutorials
-# …
-```  
-このファイルをカスタマイズすることで、分類先のタグを自由に編集できます。
-
-### 環境変数
-API キーは環境変数または `--api-key` 引数で指定します:
-- `OPENAI_API_KEY` (OpenAI)
-- `GOOGLE_API_KEY` (Gemini)
-
-## Usage
-基本コマンド:
 ```bash
+# OpenAI 埋め込みで分類
 python tag_refiner.py \
-  --embed-provider <openai|gemini|ollama> \
-  --embed-model <EMBED_MODEL> \
-  --provider <openai|gemini|ollama|embedding> \
-  --model <MODEL_NAME> \
-  [--api-key <API_KEY>] \
-  --input-dir <NOTES_DIR> \
-  [--tags-file <TAGS_YAML>] \
-  [--dry-run] [--dry-run-limit <NUM>]
+  --provider embedding \
+  --embed-provider openai \
+  --embed-model text-embedding-3-small \
+  --input-dir PATH_TO_CLIPPINGS
+
+# Gemini 埋め込みで分類
+python tag_refiner.py \
+  --provider embedding \
+  --embed-provider gemini \
+  --embed-model gemini-embedding-exp-03-07 \
+  --input-dir PATH_TO_CLIPPINGS
+
+# Ollama 埋め込みで分類
+python tag_refiner.py \
+  --provider embedding \
+  --embed-provider ollama \
+  --embed-model mxbai-embed-large \
+  --input-dir PATH_TO_CLIPPINGS
 ```
 
-- `--provider`: 使用するプロバイダ (openai, gemini, ollama, embedding; デフォルト: openai)
-- `--model`: モデル識別子 (例: `o4-mini`, `gemini-2.5-flash-preview-05-20`, `llama4`)
-- `--api-key`: API キー (OpenAI/Gemini 用)
-- `--input-dir`: Markdown ノートのルートディレクトリ (必須)
-- `--tags-file`: タグ定義ファイルのパス (デフォルト: `tags.yml`)
-- `--dry-run`: Frontmatter を書き換えずに、更新内容をコンソール出力 (最初の `--dry-run-limit` 件のみ処理)
-- `--dry-run-limit`: dry-run モード時に処理するファイル数 (デフォルト: 10)
+## 関連ツール
 
-## Examples
- - OpenAI (o4-mini) で Dry-run（デフォルトモデル:o4-mini, 最初の10件）:
-   ```bash
-   python tag_refiner.py \
-     --provider openai \
-     --model o4-mini \
-    --api-key $OPENAI_API_KEY \
-    --input-dir Clippings \
-    --dry-run
-  ```
-- Dry-runで処理件数を5件に制限:
-  ```bash
-  python tag_refiner.py \
-    --provider openai \
-    --model gpt-4 \
-    --api-key $OPENAI_API_KEY \
-    --input-dir Clippings \
-    --dry-run \
-    --dry-run-limit 5
-  ```
- - Gemini (Google) で本番実行:
-   ```bash
-   python tag_refiner.py \
-     --provider gemini \
-     --model gemini-2.5-flash-preview-05-20 \
-    --api-key $GOOGLE_API_KEY \
-    --input-dir Clippings
-  ```
- - Ollama (ローカルモデル llama4):
-   ```bash
-   python tag_refiner.py --provider ollama --model llama4 --input-dir Clippings
-   ```
- - 埋め込み（OpenAI Embeddings）で分類（上位3タグ取得）:
-   ```bash
-   python tag_refiner.py \
-     --provider embedding \
-     --model text-embedding-3-small \
-     --api-key $OPENAI_API_KEY \
-     --input-dir Clippings
-   ```
- 
-
-## Tags Taxonomy
-サンプルの `tags.yml`:
-```yaml
-# Sample tag taxonomy - customize for your vault
-sample_category:
-  - example_tag1
-  - example_tag2
-another_category:
-  - tagA
-  - tagB
-misc:
-  - uncategorized
-```  
-上記を参考に `tags.yml` を編集してタグ階層を定義してください。
-
-## Troubleshooting
-- 分類が意図しない場合は、`--dry-run` でノートの本文とタグ候補を確認し、`tags.yml` を調整してください。
-- API レスポンスの JSON 解析エラーは、LLMの出力整形が原因です。`system_prompt` や `user_prompt` を調整するか、`temperature=0` を維持してください。
-- Ollama 実行エラー: `ollama` CLI のパスやモデル名を確認。
-
-## Contributing
-- バグ報告・機能追加は Pull Request または Issue を立ててください。
-- タグ階層の変更は `tags.yml` に直接反映できます。
-
-## Generate Taxonomy
-
-Obsidian ノート一覧から日本語のタグ階層を自動生成するスクリプトです。
-生成結果はカテゴリ／サブカテゴリの階層マッピングのみを含み、元のノートタイトルは出力されません。
+### タグ分類体系の自動生成 (generate_taxonomy.py)
+Obsidian ノート一覧から日本語のタグ階層を自動生成:
 ```bash
 python generate_taxonomy.py \
-  --provider <openai|gemini|ollama> \
-  --model <MODEL_NAME> \
-  --api-key <API_KEY> \
+  --provider openai \
+  --model o4-mini \
   --input-dir <NOTES_DIR> \
-  [--depth <N>] \        # タクソノミー階層の最大深度 (デフォルト:3)
-  [--use-embedding] \    # 埋め込み＋クラスタリングでタイトルを要約
-  [--embed-provider <openai|gemini|ollama>] \
-  [--embed-model <EMBED_MODEL>] \
-  [--clusters <N>] \     # クラスタ数 (デフォルト:10)
-  [--output <file>] \ # 保存先 (デフォルト: tags_YYMMDD.yml)
-  [--dry-run]            # 標準出力のみ (ファイル未書き込み)
+  [--depth 3] \
+  [--output tags_YYMMDD.yml]
 ```
-* `--depth`: タクソノミー階層の最大深度を指定
-* `--use-embedding`: タイトルを埋め込みベースでクラスタリングし、代表タイトルに要約後に分類
-* `--clusters`: クラスタリングによってまとめるグループ数（代表タイトル数）を指定 (デフォルト:10)。
-  - この数だけ代表タイトルを抽出し、その少数のタイトルを基に LLM がタグ階層を生成します。
 
-## Setup
-Install dependencies:
+### インデックスノートの生成 (generate_index.py)
+分類済みノートからObsidian Dataview対応のインデックスノートを生成:
+```bash
+python generate_index.py \
+  --tags-file tags.yml \
+  --input-dir <NOTES_DIR> \
+  [--output Index.md]
 ```
+
+## ファイル構成
+
+- `tag_refiner.py`: メインスクリプト
+- `embedding_classifier.py`: 埋め込みベース分類モジュール
+- `generate_taxonomy.py`: タグ分類体系自動生成
+- `generate_index.py`: インデックスノート生成
+- `tags.yml`: タグ分類体系定義
+- `SETUP.md`: 詳細セットアップガイド
+- `.env.example`: API設定テンプレート
+- `tag_refiner_startup.bat/.sh`: 起動スクリプト
+
+## 実行例
+
+### 基本実行（OpenAI）
+```bash
+python tag_refiner.py \
+  --provider openai \
+  --model o4-mini \
+  --input-dir "/path/to/Clippings"
+```
+
+### Dry-run実行
+```bash
+python tag_refiner.py \
+  --provider openai \
+  --model o4-mini \
+  --input-dir "/path/to/Clippings" \
+  --dry-run \
+  --dry-run-limit 5
+```
+
+### Gemini実行
+```bash
+python tag_refiner.py \
+  --provider gemini \
+  --model gemini-2.5-flash-preview-05-20 \
+  --input-dir "/path/to/Clippings"
+```
+
+### Ollama実行
+```bash
+python tag_refiner.py \
+  --provider ollama \
+  --model llama4 \
+  --input-dir "/path/to/Clippings"
+```
+
+## トラブルシューティング
+
+- **API エラー**: `.env`ファイルのAPIキーが正しく設定されているか確認
+- **モデルエラー**: 指定したモデルが利用可能か確認
+- **Ollama エラー**: Ollamaサーバーが起動し、モデルがダウンロードされているか確認
+- **分類精度**: `--dry-run`で結果を確認後、`tags.yml`のタグ定義を調整
+
+## セキュリティ
+
+- APIキーを含む`.env`ファイルはgitignoreに含まれており、リポジトリに含まれません
+- 設定は`.env.example`をコピーして行ってください
+
+## 依存関係
+
+```bash
 pip install -r requirements.txt
 ```
 
-## Generate Index Note
-分類済みノートからObsidian Dataview対応のインデックスノートを生成します。
-```bash
-python generate_index.py \
-  --tags-file <taxonomy.yml> \  # タグ階層定義ファイル (デフォルト: tags.yml)
-  --input-dir <Clippings> \     # ノート格納ディレクトリ
-  [--output <Index.md>]         # 省略時: <input-dir>/Index.md
-```
-* `--tags-file`: 使用するタグ階層定義ファイル (デフォルト: tags.yml)
-* `--input-dir`: ノート格納ディレクトリ (例: Clippings)
-* `--output`: 出力インデックスファイルパス (省略時: <input-dir>/Index.md)
-
-生成されるノートには以下のようなDataviewブロックが含まれます。ファイルリンクは自動表示されるため、必要な列のみ指定してください:
-```dataview
-table author as Author, created as Created, description as Description, source as Source
-from "Clippings"
-where contains(tags, "研究")
-```
-Prepare or customize the tag taxonomy in `tags.yml` (default file provided next to the script).
-
-## Usage
-```
-python tag_refiner.py \
-    [--provider openai|gemini|ollama|embedding] \
-    [--model MODEL_NAME] \
-    [--api-key API_KEY] \
-    --input-dir PATH_TO_CLIPPINGS \
-    [--tags-file PATH_TO_TAGS_YAML] \
-    [--dry-run]
-```
-
-- `--provider`: which provider to use: openai (completion), gemini, ollama, or embedding (default: openai)
-- `--model`: model identifier (e.g. `gpt-4`, `chat-bison-001`, `llama2`)
-- `--api-key`: API key for OpenAI or Google (overrides env vars)
-- `--input-dir`: directory of Markdown notes (required)
-- `--tags-file`: path to YAML file defining tags taxonomy (default: `tags.yml` next to script)
-- `--dry-run`: show planned updates without writing files
-
-## Examples
-```
-# OpenAI with gpt-4
-python tag_refiner.py --provider openai --model gpt-4 --api-key $OPENAI_API_KEY --input-dir PATH_TO_CLIPPINGS
-
-# Gemini (Google) with chat-bison-001, using default tags.yml
-python tag_refiner.py \
-    --provider gemini \
-    --model gemini-2.5-flash-preview-05-20 \
-    --api-key $GOOGLE_API_KEY \
-    --input-dir PATH_TO_CLIPPINGS
-    
-# Using custom taxonomy file
-python tag_refiner.py \
-    --provider openai \
-    --model gpt-4 \
-    --api-key $OPENAI_API_KEY \
-    --input-dir PATH_TO_CLIPPINGS \
-    --tags-file /path/to/custom_tags.yml
-
- # Ollama local LLM (e.g., llama2)
-python tag_refiner.py --provider ollama --model llama4 --input-dir PATH_TO_CLIPPINGS
- # Embedding (OpenAI Embeddings)
- python tag_refiner.py --provider embedding \
-   --model text-embedding-ada-002 \
-   --api-key $OPENAI_API_KEY \
-   --input-dir PATH_TO_CLIPPINGS
-```
+主要な依存関係:
+- `openai`: OpenAI API
+- `google-generativeai`: Google Gemini API
+- `PyYAML`: YAML処理
+- `scikit-learn`: 埋め込み分類（オプション）
+- `numpy`: 数値計算（オプション）
