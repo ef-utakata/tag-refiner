@@ -10,10 +10,12 @@ Obsidian の Clippings/ フォルダ内 Markdown ノートを、LLM（OpenAI, Ge
 - **Obsidian起動時実行**: Shell Commands pluginで自動実行可能
 - **バックグラウンド実行**: 大量ファイルの処理でもタイムアウトしない
 - **00_indexディレクトリ除外**: インデックスファイルはタグ付与対象外
+- **詳細ログ機能**: タイムスタンプ付きログファイルで実行状況を確認
 
 ## セットアップ
 
 詳細な設定手順は [SETUP.md](SETUP.md) を参照してください。
+Obsidian Shell Commands plugin での自動実行設定は [OBSIDIAN_SHELL_COMMANDS.md](OBSIDIAN_SHELL_COMMANDS.md) を参照してください。
 
 ### 簡単セットアップ
 
@@ -24,7 +26,7 @@ Obsidian の Clippings/ フォルダ内 Markdown ノートを、LLM（OpenAI, Ge
    ```
 
 2. Obsidian Shell Commands plugin設定:
-   - `tag_refiner_startup.bat` を起動時実行に設定
+   - `tag_refiner_startup_fixed.bat` を起動時実行に設定
 
 ## 使用方法
 
@@ -121,7 +123,7 @@ python generate_index.py \
 - `tags.yml`: タグ分類体系定義
 - `SETUP.md`: 詳細セットアップガイド
 - `.env.example`: API設定テンプレート
-- `tag_refiner_startup.bat/.sh`: 起動スクリプト
+- `tag_refiner_startup_fixed.bat`: Windows用起動スクリプト（Obsidian Shell Commands対応）
 
 ## 実行例
 
